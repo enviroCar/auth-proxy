@@ -1,0 +1,11 @@
+language: java
+jdk:
+- oraclejdk8
+dist: trusty
+script: mvn -fae -U -B notice:check clean install
+env:
+  global:
+  - SNAPSHOT_BRANCH: "master"
+cache:
+  directories:
+  - $HOME/.m2
