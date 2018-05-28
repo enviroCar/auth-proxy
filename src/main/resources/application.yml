@@ -1,0 +1,19 @@
+server:
+  port: 9999
+
+#server.servlet.context-path=/api
+
+#
+# The proxy endpoint
+auth-proxy:
+    target:
+      uri: https://envirocar.org/api/stable/
+
+#
+# Logging configuration
+debug: true
+logging:
+  config: classpath:logback.xml
+  level:
+    root: INFO
+    org.springframework: INFO

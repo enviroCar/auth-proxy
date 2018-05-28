@@ -1,2 +1,2 @@
-# login-proxy
-A simple login proxy for single page JS applications
+# Authentication Proxy
+A simple authentication proxy for HTTP BasicAuth endpoints
