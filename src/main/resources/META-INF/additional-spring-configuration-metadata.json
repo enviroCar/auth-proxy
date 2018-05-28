@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "auth-proxy.target.uri",
+  "type": "java.lang.String",
+  "description": "The endpoint URI to proxy (and authenticate against)"
+}]}
