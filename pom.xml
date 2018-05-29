@@ -114,7 +114,6 @@
                 <configuration>
                     <header>etc/license-header.txt</header>
                     <properties>
-                        <inceptionYear>${project.inceptionYear}</inceptionYear>
                         <latestYearOfContribution>${currentYear}</latestYearOfContribution>
                         <latestYearOfContribution>${currentYearDynamic}</latestYearOfContribution>
                     </properties>
