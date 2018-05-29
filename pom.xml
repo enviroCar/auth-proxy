@@ -116,6 +116,9 @@
                     <properties>
                         <latestYearOfContribution>${currentYear}</latestYearOfContribution>
                         <latestYearOfContribution>${currentYearDynamic}</latestYearOfContribution>
+                        <mapping>
+                            <java>SLASHSTAR_STYLE</java>
+                        </mapping>
                     </properties>
                     <includes>
                         <include>**/src/**/*.java</include>

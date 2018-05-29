@@ -26,12 +26,13 @@
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  */
+
 package org.envirocar.auth.proxy.security;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 /*
  * Copyright 2004, 2005, 2006 Acegi Technology Pty Limited
@@ -54,21 +55,28 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.Assert;
 
 /**
  * An {@link AuthenticationProvider} implementation that retrieves user details from a
- * {@link UserDetailsService}.
+ * {@link CustomAuthenticator}.
+ * <p/>
+ * Base is taken from {@link DaoAuthenticationProvider} but adjusts the
+ * {@link #retrieveUser(String, UsernamePasswordAuthenticationToken)} to authenticate against a
+ * {@link CustomAuthenticator} as in {@link DaoAuthenticationProvider} it is declared as {@literal final}.
  *
  * @author Ben Alex
  * @author Rob Winch
+ * @author Henning Bredel
+ * 
+ * @See {@link DaoAuthenticationProvider}
  */
 public class CustomAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
     // ~ Static fields/initializers
@@ -124,15 +132,16 @@ public class CustomAuthenticationProvider extends AbstractUserDetailsAuthenticat
     @Override
     protected final UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication)
             throws AuthenticationException {
+        
         prepareTimingAttackProtection();
+        List<GrantedAuthority> authorities = Collections.emptyList();
+        String password = authentication.getCredentials().toString();
         try {
-            String password = authentication.getCredentials().toString();
-            ResponseEntity<AuthenticatedUser> authenticationResponse = authenticator.authenticate(username, password);
-            logger.debug("Authentication response: " + authenticationResponse.getBody());
-            if (authenticationResponse.getStatusCode().value() == 401) {
-                return new User("wrongUsername", "wrongPass", new ArrayList<GrantedAuthority>());
-            }
-            return new User(username, "{noop}" + password, Collections.emptyList());
+            // core idea taken from 
+            // http://www.baeldung.com/spring-security-authentication-provider
+            return authenticator.authenticate(username, password) == HttpStatus.UNAUTHORIZED
+                    ? new User("wrongUsername", "wrongPass", authorities)
+                    : new User(username, "{noop}" + password, authorities);
         }
         catch (Exception ex) {
             throw new AuthenticationServiceException("Unable to authenticate user " + username, ex);

@@ -28,19 +28,28 @@
  */
 package org.envirocar.auth.proxy.security;
 
+import static org.envirocar.auth.proxy.common.HeaderUtil.basicAuth;
+import static org.springframework.http.HttpMethod.GET;
+
 import java.util.Collections;
 import java.util.Map;
 
-import org.envirocar.auth.proxy.common.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Authenticates against 
+ */
 @Component
 public class CustomAuthenticator {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticator.class);
     
     private static final String USERNAME = "username";
 
@@ -60,10 +69,16 @@ public class CustomAuthenticator {
         return base + "users/{" + USERNAME + "}";
     }
 
-    public ResponseEntity<AuthenticatedUser> authenticate(String username, String pass) {
-        HttpEntity<AuthenticatedUser> entity = new HttpEntity<AuthenticatedUser>(HeaderUtil.basicAuth(username, pass));
+    public HttpStatus authenticate(String username, String password) {
+        ResponseEntity<AuthenticatedUser> response = doRequest(username, password);
+        LOGGER.debug("Authentication response: " + response.getBody());
+        return response.getStatusCode();
+    }
+
+    private ResponseEntity<AuthenticatedUser> doRequest(String username, String password) {
         Map<String, String> values = Collections.singletonMap(USERNAME, username);
-        return restTemplate.exchange(uriTemplate, HttpMethod.GET, entity, AuthenticatedUser.class, values);
+        HttpEntity<AuthenticatedUser> entity = new HttpEntity<>(basicAuth(username, password));
+        return restTemplate.exchange(uriTemplate, GET, entity, AuthenticatedUser.class, values);
     }
 
 
