@@ -49,7 +49,6 @@ public class SecurityConfig {
 
         @Autowired
         private AuthenticationProvider authenticationProvider;
-        
 
         @Bean
         @Override
