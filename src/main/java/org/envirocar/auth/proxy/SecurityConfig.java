@@ -76,7 +76,9 @@ public class SecurityConfig {
             .anyRequest()
             .authenticated()
             .and()
-            .httpBasic();
+            .httpBasic()
+            .and()
+            .cors();
             
             // https://stackoverflow.com/a/49201780
 //            http.headers()
