@@ -16,14 +16,11 @@ public class WebConfig implements WebMvcConfigurer {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                String[] allowedMethods = {"*"};
-                String[] exposedHeaders = {"*"};
-                String[] allowedHeaders = {"*"};
-                registry.addMapping("/*")
-                        .allowedOrigins("*")
-                        .allowedMethods(allowedMethods)
-                        .exposedHeaders(exposedHeaders)
-                        .allowedHeaders(allowedHeaders);
+                registry.addMapping("/**")
+                        .allowCredentials(true)
+                        .allowedMethods("*")
+                        .allowedHeaders("*")
+                        .allowedOrigins("*");
             };
         };
     }
