@@ -1,5 +1,9 @@
 server:
   port: 9999
+  servlet:
+    session:
+      cookie:
+        max-age: PT30M
 
 #server.servlet.context-path=/api
 
@@ -8,6 +12,7 @@ server:
 auth-proxy:
     target:
       uri: https://envirocar.org/api/stable/
+
 
 #
 # Logging configuration
