@@ -4,10 +4,7 @@ server:
     session:
       cookie:
         max-age: PT30M
-
-#server.servlet.context-path=/api
-
-#
+        
 # The proxy endpoint
 auth-proxy:
     target:
@@ -21,4 +18,4 @@ logging:
   config: classpath:logback.xml
   level:
     root: INFO
-    org.springframework: INFO
+    org.springframework: DEBUG

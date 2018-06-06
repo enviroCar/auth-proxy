@@ -50,18 +50,20 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class AuthProxyController {
+    
+    public static final String PATH_PREFIX = "/api";
 
     private final RestTemplate restTemplate;
     
     private final URI endpoint;
     
-    public ProxyController(@Value("${auth-proxy.target.uri}") URI endpoint) {
+    public AuthProxyController(@Value("${auth-proxy.target.uri}") URI endpoint) {
         this.restTemplate = new RestTemplate();
         this.endpoint = endpoint;
     }
 
     @ResponseBody
-    @RequestMapping("/**")
+    @RequestMapping(PATH_PREFIX + "/**")
     public ResponseEntity<?> mirrorRest(@RequestBody(required = false) String body, HttpMethod method, HttpServletRequest request) throws URISyntaxException {
         String scheme = endpoint.getScheme();
         String host = endpoint.getHost();
@@ -84,7 +86,7 @@ public class AuthProxyController {
 
     private String createPath(HttpServletRequest request) {
         String endpointPath = removeTrailingSlash(endpoint.getPath());
-        String targetPath = request.getRequestURI();
+        String targetPath = removePathPrefix(request.getRequestURI());
         return endpointPath + targetPath;
     }
 
@@ -93,5 +95,9 @@ public class AuthProxyController {
                 ? value.substring(0, value.lastIndexOf("/"))
                 : value;
     }
-    
+
+    private String removePathPrefix(String requestURI) {
+        return requestURI.substring(PATH_PREFIX.length());
+    }
+
 }

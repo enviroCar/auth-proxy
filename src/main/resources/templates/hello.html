@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+<head>
+<title>Hello World!</title>
+</head>
+<body>
+    <h1 th:inline="text">Hello [[${#httpServletRequest.remoteUser}]]!</h1>
+
+    <div>
+        Request your <a th:href="@{|/api/users/${#httpServletRequest.remoteUser}|}">user details</a>
+    </div>
+
+    <!-- 
+        bind a JavaScript logout function as a (insecure) //log:out@host/foo/bar 
+        is not allowed in some modern browsers
+
+        Basic Auth has not been designed for logout, so the browser has to be made 
+        forget about it once we successfully logged out at the server.
+     -->
+
+    <div id="logout">Logout</div>
+
+    <form name="logoutForm" th:action="@{/logout}" method="post" th:hidden="true">
+        <input hidden type="submit" value="Sign Out" />
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+                    $("#logout").click(function(e) {
+                        $.ajax({
+                            type : "POST",
+                            url : "/logout",
+                            // log out at server
+                            success : function(data, status, jqxhr) {
+                                $.ajax({
+                                    type : "GET",
+                                    url : "/hello",
+                                    beforeSend : function(request) {
+                                        // reset Browser's Basic Auth
+                                        request.setRequestHeader("Authorization", "Basic " + btoa("log:out"));
+                                    },
+                                    success : function() {
+                                        // 401 expected here
+                                        console.log("logout failed!")
+                                    },
+                                    error : function(request) {
+                                        if (request.status === 401) {
+                                            // credentials resetted => redirect
+                                            window.location.replace("/logout-success");
+                                        } else {
+                                            console.log("logout failed!");
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    });
+                </script>
+</body>
+
+</html>
