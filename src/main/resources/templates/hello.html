@@ -18,7 +18,7 @@
         forget about it once we successfully logged out at the server.
      -->
 
-    <div id="logout">Logout</div>
+    <span id="logout" style="color: blue;">Logout</span>
 
     <form name="logoutForm" th:action="@{/logout}" method="post" th:hidden="true">
         <input hidden type="submit" value="Sign Out" />
