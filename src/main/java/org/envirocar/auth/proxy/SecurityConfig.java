@@ -46,7 +46,7 @@ public class SecurityConfig {
     
     @Configuration
     protected static class LoginConfig extends WebSecurityConfigurerAdapter {
-
+        
         @Autowired
         private AuthenticationProvider authenticationProvider;
 
@@ -69,23 +69,21 @@ public class SecurityConfig {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.antMatcher("/**")
-            .authorizeRequests()
-//            .antMatchers("/login**", "/logout", "/oauth/authorize", "/oauth/confirm_access", "/error**")
-//            .permitAll()
-            .anyRequest()
-            .authenticated()
-            .and()
-            .httpBasic()
-            .and()
-            .cors();
-            
-            // https://stackoverflow.com/a/49201780
-//            http.headers()
-//                .httpStrictTransportSecurity()
-//                .disable();
-////                    .includeSubDomains(true)
-////                    .maxAgeInSeconds(0);
+            http.authorizeRequests()
+                    .anyRequest().authenticated()
+                    .antMatchers("/", "/index", "/logout-success").permitAll()
+                    .and()
+                .formLogin()
+                    .loginPage("/login")
+                    .defaultSuccessUrl("/hello")
+                    .permitAll()
+                    .and()
+                .httpBasic()
+                    .and()
+                .csrf()
+                    .disable()
+                .cors()
+                    .and();
         }
 
     }
