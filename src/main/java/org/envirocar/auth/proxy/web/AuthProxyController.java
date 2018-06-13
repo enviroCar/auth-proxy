@@ -50,16 +50,21 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class AuthProxyController {
-    
+
     public static final String PATH_PREFIX = "/api";
 
     private final RestTemplate restTemplate;
-    
+
     private final URI endpoint;
-    
-    public AuthProxyController(@Value("${auth-proxy.target.uri}") URI endpoint) {
-        this.restTemplate = new RestTemplate();
+
+    private String contextPath;
+
+    public AuthProxyController(
+            @Value("${auth-proxy.target.uri}") URI endpoint,
+            @Value("${server.servlet.contextPath}") String contextPath) {
+        restTemplate = new RestTemplate();
         this.endpoint = endpoint;
+        this.contextPath = contextPath;
     }
 
     @ResponseBody
@@ -69,7 +74,7 @@ public class AuthProxyController {
         String host = endpoint.getHost();
         int port = endpoint.getPort();
         String path = createPath(request);
-        
+
         HttpHeaders basicAuthHeader = getAuthenticationHeader();
         HttpEntity<Object> entity = new HttpEntity<>(body, basicAuthHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
@@ -79,12 +84,17 @@ public class AuthProxyController {
     private HttpHeaders getAuthenticationHeader() {
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
-        String username = (String) authentication.getName();
+        String username = authentication.getName();
         String password = (String) authentication.getCredentials();
         return HeaderUtil.basicAuth(username, password);
     }
 
-    private String createPath(HttpServletRequest request) {
+    /**
+     * VISIBLE FOR TESTING
+     * @param request
+     * @return the correct path
+     */
+    protected String createPath(HttpServletRequest request) {
         String endpointPath = removeTrailingSlash(endpoint.getPath());
         String targetPath = removePathPrefix(request.getRequestURI());
         return endpointPath + targetPath;
@@ -97,7 +107,7 @@ public class AuthProxyController {
     }
 
     private String removePathPrefix(String requestURI) {
-        return requestURI.substring(PATH_PREFIX.length());
+        return requestURI.substring(contextPath.length() + PATH_PREFIX.length());
     }
 
 }
