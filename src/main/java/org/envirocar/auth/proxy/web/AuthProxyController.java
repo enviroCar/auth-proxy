@@ -34,6 +34,8 @@ import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.envirocar.auth.proxy.common.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +52,8 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class AuthProxyController {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthProxyController.class);
 
     public static final String PATH_PREFIX = "/api";
 
@@ -61,10 +65,12 @@ public class AuthProxyController {
 
     public AuthProxyController(
             @Value("${auth-proxy.target.uri}") URI endpoint,
-            @Value("${server.servlet.contextPath}") String contextPath) {
+            @Value("${server.servlet.context-path}") String contextPath) {
         restTemplate = new RestTemplate();
         this.endpoint = endpoint;
-        this.contextPath = contextPath;
+        this.contextPath = !contextPath.equals("/")
+                ? contextPath
+                : "";
     }
 
     @ResponseBody
@@ -78,6 +84,8 @@ public class AuthProxyController {
         HttpHeaders basicAuthHeader = getAuthenticationHeader();
         HttpEntity<Object> entity = new HttpEntity<>(body, basicAuthHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
+        
+        LOGGER.debug("Forwarding to {}", uri.toString());
         return restTemplate.exchange(uri, method, entity, Object.class);
     }
 

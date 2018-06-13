@@ -22,5 +22,14 @@ public class AuthProxyControllerTest {
         String createPath = new AuthProxyController(endpoint, "/auth-proxy").createPath(request);
         assertThat(createPath, is("/api/stable/users"));
     }
+    
+    @Test
+    public void given_contextPathIsSlash_when_reqeustUsers_then_forwardUrlIsCorrect() throws Exception {
+        URI endpoint = create("https://envirocar.org/api/stable/");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/api/users");
+        String createPath = new AuthProxyController(endpoint, "/").createPath(request);
+        assertThat(createPath, is("/api/stable/users"));
+    }
 
 }
