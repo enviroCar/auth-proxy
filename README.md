@@ -28,6 +28,7 @@ A simple authentication proxy for HTTP BasicAuth endpoints
     ```
     MODE=service
     JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom
+    RUN_ARGS=--server.servlet.contextPath=/auth-proxy
     LOG_FILENAME=auth-proxy.log
     LOG_FOLDER=/var/log/auth-proxy
     ```
@@ -44,4 +45,23 @@ A simple authentication proxy for HTTP BasicAuth endpoints
       missingok
       create 640 auth-proxy auth-proxy
     }
+    ```
+ 1. Configure proxy in nginx via `/etc/nginx/sites-enabled/envirocar`:
+    ```
+    [...]
+    upstream auth-proxy {
+        server 127.0.0.1:9999 fail_timeout=0;
+    }
+    [...]
+    location /auth-proxy {
+        proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header      Host $http_host;
+        proxy_set_header      X-Forwarded-Proto https;
+        proxy_redirect        off;
+        proxy_connect_timeout 240;
+        proxy_send_timeout    240;
+        proxy_read_timeout    240;
+        proxy_pass            http://auth-proxy;
+    }
+    [...]
     ```
