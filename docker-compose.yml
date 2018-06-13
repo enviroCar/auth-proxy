@@ -1,5 +1,13 @@
 version: '3'
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - 9000:80
+    volumes:
+      #- "./landingpage/nginx-proxy.conf:/etc/nginx/conf.d/default.conf"
+      - C:\data\coding\envirocar\auth-proxy\docker-nginx-proxy.conf:/etc/nginx/conf.d/default.conf
+      #- ./docker-nginx-proxy.conf:/etc/nginx/conf.d/default.conf"
   auth-proxy:
     build:
       context: ./
@@ -7,4 +15,7 @@ services:
         - JAR_FILE=auth-proxy-0.0.1-SNAPSHOT.jar
     image: envirocar/auth-proxy
     ports:
-      - 8080:8080
+      - 9999:9999
+    environment:
+      - AUTH_PROXY_CONTEXT_PATH=/auth-proxy
+      - AUTH_PROXY_LOG_LEVEL=INFO

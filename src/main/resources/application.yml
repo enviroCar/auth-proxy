@@ -1,6 +1,7 @@
 server:
   port: 9999
   servlet:
+    context-path: ${AUTH_PROXY_CONTEXT_PATH:/}
     session:
       cookie:
         max-age: PT30M
@@ -13,10 +14,11 @@ auth-proxy:
 
 #
 # Logging configuration
-debug: true
+debug: false
 logging:
   file: target/auth-proxy.log
   config: classpath:logback.xml
   level:
-    root: INFO
-    org.springframework: DEBUG
+    root: ${AUTH_PROXY_LOG_LEVEL:INFO}
+#    org.envirocar: DEBUG
+#    org.springframework: DEBUG
