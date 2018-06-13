@@ -27,10 +27,8 @@ A simple authentication proxy for HTTP BasicAuth endpoints
  1. Create `/opt/auth-proxy/auth-proxy.conf` with the following content:
     ```
     MODE=service
-    JAVA_OPTS=-Djava.security.egd=file:/dev/./urandom
-    RUN_ARGS=--server.servlet.contextPath=/auth-proxy
-    LOG_FILENAME=auth-proxy.log
-    LOG_FOLDER=/var/log/auth-proxy
+    JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
+    RUN_ARGS="--server.servlet.contextPath=/auth-proxy  --logging.file=/var/log/auth-proxy/auth-proxy.log"
     ```
  1. Test service via `sudo /etc/init.d auth-proxy start|status|stop`
  1. Activate service on system level: `sudo update-rc.d auth-proxy defaults`
@@ -46,7 +44,7 @@ A simple authentication proxy for HTTP BasicAuth endpoints
       create 640 auth-proxy auth-proxy
     }
     ```
- 1. Configure proxy in nginx via `/etc/nginx/sites-enabled/envirocar`:
+ 1. Configure proxy in nginx via `/etc/nginx/sites-enabled/envirocar` (similar to [docker nginx config](docker-nginx-proxy.conf))
     ```
     [...]
     upstream auth-proxy {
@@ -54,6 +52,7 @@ A simple authentication proxy for HTTP BasicAuth endpoints
     }
     [...]
     location /auth-proxy {
+        proxy_http_version    1.1;
         proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header      Host $http_host;
         proxy_set_header      X-Forwarded-Proto https;
