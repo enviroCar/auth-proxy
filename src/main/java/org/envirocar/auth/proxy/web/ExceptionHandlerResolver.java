@@ -29,6 +29,7 @@
 package org.envirocar.auth.proxy.web;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -41,6 +42,9 @@ public class ExceptionHandlerResolver extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = { HttpClientErrorException.class })
     protected ResponseEntity<Object> handleConflict(HttpClientErrorException ex, WebRequest request) {
-        return handleExceptionInternal(ex, ex.getMessage(), new HttpHeaders(), ex.getStatusCode(), request);
+        String msg = ex.getResponseBodyAsString();
+        HttpStatus statusCode = ex.getStatusCode();
+        HttpHeaders httpHeaders = ex.getResponseHeaders();
+        return handleExceptionInternal(ex, msg, httpHeaders, statusCode, request);
     }
 }
