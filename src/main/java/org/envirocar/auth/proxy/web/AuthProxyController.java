@@ -30,6 +30,7 @@ package org.envirocar.auth.proxy.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -52,7 +53,7 @@ import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class AuthProxyController {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthProxyController.class);
 
     public static final String PATH_PREFIX = "/api";
@@ -61,7 +62,7 @@ public class AuthProxyController {
 
     private final URI endpoint;
 
-    private String contextPath;
+    private final String contextPath;
 
     public AuthProxyController(
             @Value("${auth-proxy.target.uri}") URI endpoint,
@@ -81,15 +82,25 @@ public class AuthProxyController {
         int port = endpoint.getPort();
         String path = createPath(request);
 
-        HttpHeaders basicAuthHeader = getAuthenticationHeader();
-        HttpEntity<Object> entity = new HttpEntity<>(body, basicAuthHeader);
+        HttpHeaders httpHeader = getHttpHeaders(request);
+        HttpEntity<Object> entity = new HttpEntity<>(body, httpHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
-        
+
         LOGGER.debug("Forwarding to {}", uri.toString());
         return restTemplate.exchange(uri, method, entity, Object.class);
     }
 
-    private HttpHeaders getAuthenticationHeader() {
+    private HttpHeaders getHttpHeaders(HttpServletRequest request) {
+        HttpHeaders httpHeaders = createAuthHttpHeader();
+        Enumeration<String> sentHeaders = request.getHeaderNames();
+        while (sentHeaders.hasMoreElements()) {
+            String sentHeader = sentHeaders.nextElement();
+            httpHeaders.add(sentHeader, request.getHeader(sentHeader));
+        }
+        return httpHeaders;
+    }
+
+    private HttpHeaders createAuthHttpHeader() {
         SecurityContext context = SecurityContextHolder.getContext();
         Authentication authentication = context.getAuthentication();
         String username = authentication.getName();
