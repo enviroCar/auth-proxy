@@ -5,7 +5,10 @@ server:
     session:
       cookie:
         max-age: PT30M
-        
+  compression:
+    enabled: true
+    mime-types: application/json, application/*+json
+    min-response-size: 1024
 # The proxy endpoint
 auth-proxy:
     target:

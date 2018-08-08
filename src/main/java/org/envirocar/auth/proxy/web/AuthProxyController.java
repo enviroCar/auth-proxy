@@ -34,7 +34,8 @@ import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.envirocar.auth.proxy.common.HeaderUtil;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,9 +43,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -67,11 +66,18 @@ public class AuthProxyController {
     public AuthProxyController(
             @Value("${auth-proxy.target.uri}") URI endpoint,
             @Value("${server.servlet.context-path}") String contextPath) {
-        restTemplate = new RestTemplate();
+
+
+        restTemplate = createRestTemplate();
         this.endpoint = endpoint;
         this.contextPath = !contextPath.equals("/")
                 ? contextPath
                 : "";
+    }
+
+    private RestTemplate createRestTemplate() {
+        CloseableHttpClient clientBuilder = HttpClientBuilder.create().build();
+        return new RestTemplate(new HttpComponentsClientHttpRequestFactory(clientBuilder));
     }
 
     @ResponseBody
