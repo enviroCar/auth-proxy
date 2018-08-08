@@ -91,21 +91,13 @@ public class AuthProxyController {
     }
 
     private HttpHeaders getHttpHeaders(HttpServletRequest request) {
-        HttpHeaders httpHeaders = createAuthHttpHeader();
+        HttpHeaders httpHeaders = new HttpHeaders();
         Enumeration<String> sentHeaders = request.getHeaderNames();
         while (sentHeaders.hasMoreElements()) {
             String sentHeader = sentHeaders.nextElement();
             httpHeaders.add(sentHeader, request.getHeader(sentHeader));
         }
         return httpHeaders;
-    }
-
-    private HttpHeaders createAuthHttpHeader() {
-        SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = context.getAuthentication();
-        String username = authentication.getName();
-        String password = (String) authentication.getCredentials();
-        return HeaderUtil.basicAuth(username, password);
     }
 
     /**
