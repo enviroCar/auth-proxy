@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.envirocar.auth.proxy.common.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -102,6 +106,13 @@ public class AuthProxyController {
         while (sentHeaders.hasMoreElements()) {
             String sentHeader = sentHeaders.nextElement();
             httpHeaders.add(sentHeader, request.getHeader(sentHeader));
+        }
+        if (!httpHeaders.containsKey("Authorization")) {
+            SecurityContext context = SecurityContextHolder.getContext();
+            Authentication authentication = context.getAuthentication();
+            String username = authentication.getName();
+            String password = (String) authentication.getCredentials();
+            httpHeaders.add("Authorization", HeaderUtil.createAuthorizationValue(username, password));
         }
         return httpHeaders;
     }

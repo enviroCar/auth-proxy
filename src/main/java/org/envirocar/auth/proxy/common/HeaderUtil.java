@@ -42,14 +42,14 @@ public class HeaderUtil {
         acceptHeaders.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         String authorizationValue = createAuthorizationValue(username, password);
         acceptHeaders.set("Authorization", authorizationValue);
-        
+
         // http://envirocar.github.io/enviroCar-server/api/authentification
 //        acceptHeaders.set("X-User", username);
 //        acceptHeaders.set("X-Token", password);
         return acceptHeaders;
     }
 
-    private static String createAuthorizationValue(String username, String password) {
+    public static String createAuthorizationValue(String username, String password) {
         String authorization = username + ":" + password;
         byte[] bytes = authorization.getBytes(Charset.forName("US-ASCII"));
         return "Basic " + new String(encode(bytes));
