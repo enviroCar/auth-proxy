@@ -81,5 +81,4 @@ public class CustomAuthenticator {
         return restTemplate.exchange(uriTemplate, GET, entity, AuthenticatedUser.class, values);
     }
 
-
 }

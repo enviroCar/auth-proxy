@@ -96,8 +96,23 @@ public class AuthProxyController {
         HttpEntity<Object> entity = new HttpEntity<>(body, httpHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
 
-        LOGGER.debug("Forwarding to {}", uri.toString());
-        return restTemplate.exchange(uri, method, entity, Object.class);
+        LOGGER.debug("Forwarding to: {}", uri.toString());
+        LOGGER.debug("R E Q U E S T info:");
+        LOGGER.debug("headers    : {}", request.getHeaderNames());
+        LOGGER.debug("host       : {}", host);
+        LOGGER.debug("port       : {}", port);
+        LOGGER.debug("path       : {}", path);
+        LOGGER.debug("scheme     : {}", scheme);
+        LOGGER.debug("httpHeader : {}", httpHeader);
+        LOGGER.debug("body       : {}", body);
+        LOGGER.debug(" ");
+        ResponseEntity re = restTemplate.exchange(uri, method, entity, Object.class);
+        LOGGER.debug("R E S P O N S E info:");
+        LOGGER.debug("headers         : {}", re.getHeaders());
+        LOGGER.debug("StatusCode      : {}", re.getStatusCode());
+        LOGGER.debug("StatusCodeValue : {}", re.getStatusCodeValue());
+        LOGGER.debug("body            : {}", re.getBody().toString());
+        return re;
     }
 
     private HttpHeaders getHttpHeaders(HttpServletRequest request) {
