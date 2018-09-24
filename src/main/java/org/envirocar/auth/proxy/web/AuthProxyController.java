@@ -105,7 +105,10 @@ public class AuthProxyController {
         Enumeration<String> sentHeaders = request.getHeaderNames();
         while (sentHeaders.hasMoreElements()) {
             String sentHeader = sentHeaders.nextElement();
-            httpHeaders.add(sentHeader, request.getHeader(sentHeader));
+            if ((sentHeader != null) && !sentHeader.toLowerCase().startsWith("origin")) {
+                // CORS is not relevant in a non-Javascript context
+                httpHeaders.add(sentHeader, request.getHeader(sentHeader));
+            }
         }
         if (!httpHeaders.containsKey("Authorization")) {
             SecurityContext context = SecurityContextHolder.getContext();
