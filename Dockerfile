@@ -10,7 +10,7 @@ RUN mvn --batch-mode --errors --fail-fast \
 
 FROM java:8-jre-alpine
 
-ARG VERSION
+ARG VERSION=0.0.1-SNAPSHOT
 
 COPY --from=BUILDER /app/target/auth-proxy-${VERSION}.jar /app.jar
 
