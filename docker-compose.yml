@@ -12,7 +12,7 @@ services:
     build:
       context: ./
       args:
-        - JAR_FILE=auth-proxy-0.0.1-SNAPSHOT.jar
+        - VERSION=0.0.1-SNAPSHOT
     image: envirocar/auth-proxy
     ports:
       - 9999:9999
