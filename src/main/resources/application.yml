@@ -12,7 +12,7 @@ server:
 # The proxy endpoint
 auth-proxy:
     target:
-      uri: https://envirocar.org/api/stable/
+      uri: ${AUTH_PROXY_TARGET_URI:https://envirocar.org/api/stable/}
 
 
 #
