@@ -6,7 +6,7 @@ node {
   }
 
   stage('Build image') {
-    app = docker.build("ec-components/auth-proxy")
+    app = docker.build("envirocar/auth-proxy")
   }
 
   stage('Push image') {
