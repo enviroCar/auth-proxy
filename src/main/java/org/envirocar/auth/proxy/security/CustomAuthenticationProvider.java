@@ -75,7 +75,7 @@ import org.springframework.util.Assert;
  * @author Ben Alex
  * @author Rob Winch
  * @author Henning Bredel
- * 
+ *
  * @See {@link DaoAuthenticationProvider}
  */
 public class CustomAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
@@ -117,22 +117,22 @@ public class CustomAuthenticationProvider extends AbstractUserDetailsAuthenticat
         if (authentication.getCredentials() == null) {
             logger.debug("Authentication failed: no credentials provided");
             throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials",
-                                                                  "Bad credentials"));
+                    "Bad credentials"));
         }
 
         String presentedPassword = authentication.getCredentials().toString();
 
-        if ( !passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
+        if (!passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
             logger.debug("Authentication failed: password does not match stored value");
             throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials",
-                                                                  "Bad credentials"));
+                    "Bad credentials"));
         }
     }
 
     @Override
     protected final UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication)
             throws AuthenticationException {
-        
+
         prepareTimingAttackProtection();
         List<GrantedAuthority> authorities = Collections.emptyList();
         String password = authentication.getCredentials().toString();

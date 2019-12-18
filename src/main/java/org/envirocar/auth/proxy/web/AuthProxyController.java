@@ -137,6 +137,7 @@ public class AuthProxyController {
 
     /**
      * VISIBLE FOR TESTING
+     *
      * @param request
      * @return the correct path
      */
@@ -148,8 +149,8 @@ public class AuthProxyController {
 
     private String removeTrailingSlash(String value) {
         return value.endsWith("/")
-                ? value.substring(0, value.lastIndexOf("/"))
-                : value;
+               ? value.substring(0, value.lastIndexOf("/"))
+               : value;
     }
 
     private String removePathPrefix(String requestURI) {

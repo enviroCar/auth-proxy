@@ -43,10 +43,10 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    
+
     @Configuration
     protected static class LoginConfig extends WebSecurityConfigurerAdapter {
-        
+
         @Autowired
         private AuthenticationProvider authenticationProvider;
 
@@ -55,7 +55,7 @@ public class SecurityConfig {
         public AuthenticationManager authenticationManager() throws Exception {
             return super.authenticationManager();
         }
-        
+
         @Bean
         public AuthenticationProvider authenticationProvider(CustomAuthenticator authenticator) {
             return new CustomAuthenticationProvider(authenticator);
