@@ -57,22 +57,15 @@ import java.util.TreeSet;
 
 @RestController
 public class AuthProxyController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthProxyController.class);
-
-    public static final String PATH_PREFIX = "/api";
-    private static final String HOST_HEADER = "Host";
+    private static final Logger LOG = LoggerFactory.getLogger(AuthProxyController.class);
+    private static final String PATH_PREFIX = "/api";
     private static final String FORWARDED_HOST_HEADER = "X-Forwarded-Host";
     private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
     private static final String FORWARDED_PORT_HEADER = "X-Forwarded-Port";
-    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final RestTemplate restTemplate;
-
     private final URI endpoint;
-
     private final String contextPath;
-
     private final Set<String> headersToIgnore;
 
     public AuthProxyController(
@@ -108,22 +101,24 @@ public class AuthProxyController {
         HttpEntity<Object> entity = new HttpEntity<>(body, httpHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
 
-        LOGGER.debug("Forwarding to: {}", uri.toString());
-        LOGGER.debug("R E Q U E S T info:");
-        LOGGER.debug("headers    : {}", request.getHeaderNames());
-        LOGGER.debug("host       : {}", host);
-        LOGGER.debug("port       : {}", port);
-        LOGGER.debug("path       : {}", path);
-        LOGGER.debug("scheme     : {}", scheme);
-        LOGGER.debug("httpHeader : {}", httpHeader);
-        LOGGER.debug("body       : {}", body);
-        LOGGER.debug(" ");
-        ResponseEntity re = restTemplate.exchange(uri, method, entity, Object.class);
-        LOGGER.debug("R E S P O N S E info:");
-        LOGGER.debug("headers         : {}", re.getHeaders());
-        LOGGER.debug("StatusCode      : {}", re.getStatusCode());
-        LOGGER.debug("StatusCodeValue : {}", re.getStatusCodeValue());
-        LOGGER.debug("body            : {}", re.getBody().toString());
+        LOG.debug("Forwarding to: {}", uri.toString());
+        LOG.debug("R E Q U E S T info:");
+        LOG.debug("headers    : {}", request.getHeaderNames());
+        LOG.debug("host       : {}", host);
+        LOG.debug("port       : {}", port);
+        LOG.debug("path       : {}", path);
+        LOG.debug("scheme     : {}", scheme);
+        LOG.debug("httpHeader : {}", httpHeader);
+        LOG.debug("body       : {}", body);
+        LOG.debug(" ");
+        ResponseEntity<Object> re = restTemplate.exchange(uri, method, entity, Object.class);
+        LOG.debug("R E S P O N S E info:");
+        LOG.debug("headers         : {}", re.getHeaders());
+        LOG.debug("StatusCode      : {}", re.getStatusCode());
+        LOG.debug("StatusCodeValue : {}", re.getStatusCodeValue());
+        if (re.getBody() != null) {
+            LOG.debug("body            : {}", re.getBody().toString());
+        }
         return re;
     }
 
@@ -136,38 +131,32 @@ public class AuthProxyController {
                 httpHeaders.add(sentHeader, request.getHeader(sentHeader));
             }
         }
-        if (!httpHeaders.containsKey(AUTHORIZATION_HEADER)) {
+        if (!httpHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {
             SecurityContext context = SecurityContextHolder.getContext();
             Authentication authentication = context.getAuthentication();
             String username = authentication.getName();
             String password = (String) authentication.getCredentials();
-            httpHeaders.add(AUTHORIZATION_HEADER, HeaderUtil.createAuthorizationValue(username, password));
+            httpHeaders.set(HttpHeaders.AUTHORIZATION, HeaderUtil.createAuthorizationValue(username, password));
         }
         final URI requestURI = URI.create(request.getRequestURI());
         if (!httpHeaders.containsKey(FORWARDED_HOST_HEADER)) {
-            String host = request.getHeader(HOST_HEADER);
+            String host = request.getHeader(HttpHeaders.HOST);
             if (host == null) {
                 host = requestURI.getHost();
             }
-            httpHeaders.add(FORWARDED_HOST_HEADER, host);
+            httpHeaders.set(FORWARDED_HOST_HEADER, host);
         }
         if (!httpHeaders.containsKey(FORWARDED_PROTO_HEADER)) {
-            httpHeaders.add(FORWARDED_PROTO_HEADER, requestURI.getScheme());
+            httpHeaders.set(FORWARDED_PROTO_HEADER, requestURI.getScheme());
         }
         if (!httpHeaders.containsKey(FORWARDED_PORT_HEADER)) {
             if (requestURI.getPort() > 0) {
-                httpHeaders.add(FORWARDED_PORT_HEADER, String.valueOf(requestURI.getPort()));
+                httpHeaders.set(FORWARDED_PORT_HEADER, String.valueOf(requestURI.getPort()));
             }
         }
         return httpHeaders;
     }
 
-    /**
-     * VISIBLE FOR TESTING
-     *
-     * @param request
-     * @return the correct path
-     */
     protected String createPath(HttpServletRequest request) {
         String endpointPath = removeTrailingSlash(endpoint.getPath());
         String targetPath = removePathPrefix(request.getRequestURI());
@@ -175,9 +164,7 @@ public class AuthProxyController {
     }
 
     private String removeTrailingSlash(String value) {
-        return value.endsWith("/")
-               ? value.substring(0, value.lastIndexOf("/"))
-               : value;
+        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 
     private String removePathPrefix(String requestURI) {

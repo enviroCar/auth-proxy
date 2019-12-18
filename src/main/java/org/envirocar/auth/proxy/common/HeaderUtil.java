@@ -31,7 +31,7 @@ package org.envirocar.auth.proxy.common;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class HeaderUtil {
@@ -45,7 +45,7 @@ public class HeaderUtil {
 
     public static String createAuthorizationValue(String username, String password) {
         String authorization = String.format("%s:%s", username, password);
-        byte[] bytes = authorization.getBytes(Charset.forName("UTF-8"));
+        byte[] bytes = authorization.getBytes(StandardCharsets.UTF_8);
         return String.format("Basic %s", Base64.getEncoder().encodeToString(bytes));
     }
 
