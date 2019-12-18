@@ -61,6 +61,11 @@ public class AuthProxyController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthProxyController.class);
 
     public static final String PATH_PREFIX = "/api";
+    private static final String HOST_HEADER = "Host";
+    private static final String FORWARDED_HOST_HEADER = "X-Forwarded-Host";
+    private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
+    private static final String FORWARDED_PORT_HEADER = "X-Forwarded-Port";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final RestTemplate restTemplate;
 
@@ -99,6 +104,7 @@ public class AuthProxyController {
         String path = createPath(request);
 
         HttpHeaders httpHeader = getHttpHeaders(request);
+
         HttpEntity<Object> entity = new HttpEntity<>(body, httpHeader);
         URI uri = new URI(scheme, null, host, port, path, request.getQueryString(), null);
 
@@ -130,12 +136,28 @@ public class AuthProxyController {
                 httpHeaders.add(sentHeader, request.getHeader(sentHeader));
             }
         }
-        if (!httpHeaders.containsKey("Authorization")) {
+        if (!httpHeaders.containsKey(AUTHORIZATION_HEADER)) {
             SecurityContext context = SecurityContextHolder.getContext();
             Authentication authentication = context.getAuthentication();
             String username = authentication.getName();
             String password = (String) authentication.getCredentials();
-            httpHeaders.add("Authorization", HeaderUtil.createAuthorizationValue(username, password));
+            httpHeaders.add(AUTHORIZATION_HEADER, HeaderUtil.createAuthorizationValue(username, password));
+        }
+        final URI requestURI = URI.create(request.getRequestURI());
+        if (!httpHeaders.containsKey(FORWARDED_HOST_HEADER)) {
+            String host = request.getHeader(HOST_HEADER);
+            if (host == null) {
+                host = requestURI.getHost();
+            }
+            httpHeaders.add(FORWARDED_HOST_HEADER, host);
+        }
+        if (!httpHeaders.containsKey(FORWARDED_PROTO_HEADER)) {
+            httpHeaders.add(FORWARDED_PROTO_HEADER, requestURI.getScheme());
+        }
+        if (!httpHeaders.containsKey(FORWARDED_PORT_HEADER)) {
+            if (requestURI.getPort() > 0) {
+                httpHeaders.add(FORWARDED_PORT_HEADER, String.valueOf(requestURI.getPort()));
+            }
         }
         return httpHeaders;
     }
