@@ -58,7 +58,7 @@ import java.util.TreeSet;
 @RestController
 public class AuthProxyController {
     private static final Logger LOG = LoggerFactory.getLogger(AuthProxyController.class);
-    private static final String PATH_PREFIX = "/api";
+    public static final String PATH_PREFIX = "/api";
     private static final String FORWARDED_HOST_HEADER = "X-Forwarded-Host";
     private static final String FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
     private static final String FORWARDED_PORT_HEADER = "X-Forwarded-Port";

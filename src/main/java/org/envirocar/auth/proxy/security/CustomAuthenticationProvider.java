@@ -26,13 +26,31 @@
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  */
-
 package org.envirocar.auth.proxy.security;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import org.springframework.http.HttpStatus;
+import static org.envirocar.auth.proxy.common.HeaderUtil.basicAuth;
+import static org.springframework.http.HttpMethod.GET;
 
 /*
  * Copyright 2004, 2005, 2006 Acegi Technology Pty Limited
@@ -50,130 +68,72 @@ import org.springframework.http.HttpStatus;
  * limitations under the License.
  */
 
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.Assert;
+@Component
+public class CustomAuthenticationProvider implements AuthenticationProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomAuthenticationProvider.class);
+    private static final String USERNAME = "username";
+    private final String uriTemplate;
+    private final RestTemplate restTemplate;
 
-/**
- * An {@link AuthenticationProvider} implementation that retrieves user details from a
- * {@link CustomAuthenticator}.
- * <p/>
- * Base is taken from {@link DaoAuthenticationProvider} but adjusts the
- * {@link #retrieveUser(String, UsernamePasswordAuthenticationToken)} to authenticate against a
- * {@link CustomAuthenticator} as in {@link DaoAuthenticationProvider} it is declared as {@literal final}.
- *
- * @author Ben Alex
- * @author Rob Winch
- * @author Henning Bredel
- *
- * @See {@link DaoAuthenticationProvider}
- */
-public class CustomAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
-    // ~ Static fields/initializers
-    // =====================================================================================
-
-    /**
-     * The plaintext password used to perform PasswordEncoder#matches(CharSequence, String)} on when the user
-     * is not found to avoid SEC-2056.
-     */
-    private static final String USER_NOT_FOUND_PASSWORD = "userNotFoundPassword";
-
-    // ~ Instance fields
-    // ================================================================================================
-
-    private CustomAuthenticator authenticator;
-
-    private PasswordEncoder passwordEncoder;
-
-    /**
-     * The password used to perform {@link PasswordEncoder#matches(CharSequence, String)} on when the user is
-     * not found to avoid SEC-2056. This is necessary, because some {@link PasswordEncoder} implementations
-     * will short circuit if the password is not in a valid format.
-     */
-    private volatile String userNotFoundEncodedPassword;
-
-    public CustomAuthenticationProvider(CustomAuthenticator authenticator) {
-        setPasswordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder());
-        setAuthenticator(authenticator);
+    @Autowired
+    public CustomAuthenticationProvider(@Value("${auth-proxy.target.uri}") String authenticationUri) {
+        this.uriTemplate = createUserDetailsTemplate(authenticationUri);
+        this.restTemplate = new RestTemplate();
     }
 
-    // ~ Methods
-    // ========================================================================================================
+    private String createUserDetailsTemplate(String authenticationUri) {
+        String base = !authenticationUri.endsWith("/") ? authenticationUri + "/" : authenticationUri;
+        return base + "users/{" + USERNAME + "}";
+    }
 
-    @Override
-    protected void additionalAuthenticationChecks(UserDetails userDetails,
-                                                  UsernamePasswordAuthenticationToken authentication)
-            throws AuthenticationException {
-        if (authentication.getCredentials() == null) {
-            logger.debug("Authentication failed: no credentials provided");
-            throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"));
-        }
+    private HttpStatus authenticate(String username, String password) {
+        ResponseEntity<AuthenticatedUser> response = doRequest(username, password);
+        LOGGER.debug("Authentication response: " + response.getBody());
+        return response.getStatusCode();
+    }
 
-        String presentedPassword = authentication.getCredentials().toString();
-
-        if (!passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
-            logger.debug("Authentication failed: password does not match stored value");
-            throw new BadCredentialsException(messages.getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials",
-                    "Bad credentials"));
-        }
+    private ResponseEntity<AuthenticatedUser> doRequest(String username, String password) {
+        Map<String, String> values = Collections.singletonMap(USERNAME, username);
+        HttpEntity<AuthenticatedUser> entity = new HttpEntity<>(basicAuth(username, password));
+        return restTemplate.exchange(uriTemplate, GET, entity, AuthenticatedUser.class, values);
     }
 
     @Override
-    protected final UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication)
-            throws AuthenticationException {
-
-        prepareTimingAttackProtection();
-        List<GrantedAuthority> authorities = Collections.emptyList();
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        String username = authentication.getName();
         String password = authentication.getCredentials().toString();
+        List<GrantedAuthority> authorities = Collections.emptyList();
         try {
-            // core idea taken from 
-            // http://www.baeldung.com/spring-security-authentication-provider
-            return authenticator.authenticate(username, password) == HttpStatus.UNAUTHORIZED
-                    ? new User("wrongUsername", "wrongPass", authorities)
-                    : new User(username, "{noop}" + password, authorities);
-        }
-        catch (Exception ex) {
+            if (authenticate(username, password) != HttpStatus.OK) {
+                throw new AuthenticationServiceException("Unable to authenticate user " + username);
+            }
+            return new UsernamePasswordAuthenticationToken(username, password, authorities);
+        } catch (HttpClientErrorException ex) {
+            if (ex.getStatusCode() == HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS) {
+                throw new UnavailableForLegalReasonsException(ex);
+            } else {
+                throw new AuthenticationServiceException("Unable to authenticate user " + username, ex);
+            }
+        } catch (Exception ex) {
             throw new AuthenticationServiceException("Unable to authenticate user " + username, ex);
         }
+
     }
 
-    private void prepareTimingAttackProtection() {
-        if (this.userNotFoundEncodedPassword == null) {
-            this.userNotFoundEncodedPassword = this.passwordEncoder.encode(USER_NOT_FOUND_PASSWORD);
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
+
+    private static class AuthenticatedUser {
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
-
-    public void setAuthenticator(CustomAuthenticator authenticator) {
-        Assert.notNull(authenticator, "authenticator cannot be null");
-        this.authenticator = authenticator;
-    }
-
-    /**
-     * Sets the PasswordEncoder instance to be used to encode and validate passwords. If not set, the password
-     * will be compared using {@link PasswordEncoderFactories#createDelegatingPasswordEncoder()}
-     *
-     * @param passwordEncoder
-     *        must be an instance of one of the {@code PasswordEncoder} types.
-     */
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        Assert.notNull(passwordEncoder, "passwordEncoder cannot be null");
-        this.passwordEncoder = passwordEncoder;
-        this.userNotFoundEncodedPassword = null;
-    }
-
-    protected PasswordEncoder getPasswordEncoder() {
-        return passwordEncoder;
-    }
-
 }
