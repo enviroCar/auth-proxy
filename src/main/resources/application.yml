@@ -19,7 +19,6 @@ auth-proxy:
 # Logging configuration
 debug: false
 logging:
-  file: target/auth-proxy.log
   config: classpath:logback.xml
   level:
     root: ${AUTH_PROXY_LOG_LEVEL:INFO}
