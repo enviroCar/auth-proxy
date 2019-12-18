@@ -38,7 +38,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/login").setViewName("login");
@@ -49,19 +49,13 @@ public class WebConfig implements WebMvcConfigurer {
         WebMvcConfigurer.super.addViewControllers(registry);
     }
 
-    @Bean
-    public WebMvcConfigurer webMvcConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping(AuthProxyController.PATH_PREFIX + "/**")
-                        .allowCredentials(true)
-                        .allowedMethods("*")
-                        .allowedHeaders("*")
-                        .allowedOrigins("*");
-            }
-
-        };
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping(AuthProxyController.PATH_PREFIX + "/**")
+                .allowCredentials(true)
+                .allowedMethods("*")
+                .allowedHeaders("*")
+                .allowedOrigins("*");
     }
 
 }
