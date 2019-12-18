@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2019 52°North Initiative for Geospatial Open Source
  * Software GmbH
  *
@@ -26,7 +26,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
  * for more details.
  */
-
 package org.envirocar.auth.proxy;
 
 import org.envirocar.auth.proxy.web.AuthProxyController;
