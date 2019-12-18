@@ -11,9 +11,9 @@ server:
     min-response-size: 1024
 # The proxy endpoint
 auth-proxy:
-    target:
-      uri: ${AUTH_PROXY_TARGET_URI:https://envirocar.org/api/stable/}
-
+  target:
+    uri: ${AUTH_PROXY_TARGET_URI:https://envirocar.org/api/dev/}
+  headersToIgnore: origin,host
 
 #
 # Logging configuration

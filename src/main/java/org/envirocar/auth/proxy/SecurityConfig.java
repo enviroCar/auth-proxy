@@ -62,7 +62,7 @@ public class SecurityConfig {
         }
 
         @Override
-        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        protected void configure(AuthenticationManagerBuilder auth) {
             auth.authenticationProvider(authenticationProvider)
                 .eraseCredentials(false);
         }

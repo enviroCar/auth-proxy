@@ -28,12 +28,6 @@
  */
 package org.envirocar.auth.proxy.web;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.envirocar.auth.proxy.common.HeaderUtil;
@@ -54,6 +48,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.TreeSet;
+
 @RestController
 public class AuthProxyController {
 
@@ -67,16 +68,20 @@ public class AuthProxyController {
 
     private final String contextPath;
 
+    private final Set<String> headersToIgnore;
+
     public AuthProxyController(
             @Value("${auth-proxy.target.uri}") URI endpoint,
-            @Value("${server.servlet.context-path}") String contextPath) {
-
-
+            @Value("${server.servlet.context-path}") String contextPath,
+            @Value("#{'${auth-proxy.headersToIgnore}'.split(',')}") Set<String> headersToIgnore) {
         restTemplate = createRestTemplate();
         this.endpoint = endpoint;
-        this.contextPath = !contextPath.equals("/")
-                ? contextPath
-                : "";
+        this.contextPath = !contextPath.equals("/") ? contextPath : "";
+        this.headersToIgnore = new TreeSet<>(String::compareToIgnoreCase);
+        if (headersToIgnore != null) {
+            this.headersToIgnore.addAll(headersToIgnore);
+        }
+
     }
 
     private RestTemplate createRestTemplate() {
@@ -86,7 +91,8 @@ public class AuthProxyController {
 
     @ResponseBody
     @RequestMapping(PATH_PREFIX + "/**")
-    public ResponseEntity<?> mirrorRest(@RequestBody(required = false) String body, HttpMethod method, HttpServletRequest request) throws URISyntaxException {
+    public ResponseEntity<?> mirrorRest(@RequestBody(required = false) String body, HttpMethod method,
+                                        HttpServletRequest request) throws URISyntaxException {
         String scheme = endpoint.getScheme();
         String host = endpoint.getHost();
         int port = endpoint.getPort();
@@ -120,8 +126,7 @@ public class AuthProxyController {
         Enumeration<String> sentHeaders = request.getHeaderNames();
         while (sentHeaders.hasMoreElements()) {
             String sentHeader = sentHeaders.nextElement();
-            if ((sentHeader != null) && !sentHeader.toLowerCase().startsWith("origin")) {
-                // CORS is not relevant in a non-Javascript context
+            if ((sentHeader != null) && !headersToIgnore.contains(sentHeader)) {
                 httpHeaders.add(sentHeader, request.getHeader(sentHeader));
             }
         }
