@@ -22,7 +22,8 @@ public class CustomBasicAuthenticationEntryPoint extends BasicAuthenticationEntr
         if (authException instanceof UnavailableForLegalReasonsException) {
             writeException(response, (UnavailableForLegalReasonsException) authException);
         } else {
-            super.commence(request, response, authException);
+            response.addHeader("WWW-Authenticate", "x-Basic realm=\"" + this.getRealmName() + "\"");
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase());
         }
     }
 
