@@ -112,6 +112,14 @@ public class AuthProxyController {
         LOG.debug("body       : {}", body);
         LOG.debug(" ");
         ResponseEntity<Object> re = restTemplate.exchange(uri, method, entity, Object.class);
+
+        // remove the Transfer-Encoding header
+        HttpHeaders httpHeaders = new HttpHeaders();
+        re.getHeaders().entrySet().stream()
+          .filter(e -> !e.getKey().equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING))
+          .forEach(e -> e.getValue().forEach(v -> httpHeaders.add(e.getKey(), v)));
+        re = new ResponseEntity<>(re.getBody(), httpHeaders, re.getStatusCode());
+
         LOG.debug("R E S P O N S E info:");
         LOG.debug("headers         : {}", re.getHeaders());
         LOG.debug("StatusCode      : {}", re.getStatusCode());
